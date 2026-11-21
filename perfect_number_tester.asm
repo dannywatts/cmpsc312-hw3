@@ -11,13 +11,15 @@
 # AI tool(s):
 
 .data
-    message: .asciiz "Enter a positive number: "
+    inputMessage: .asciiz "Enter a positive number: "
+    perfectMessage: .asciiz "The number is perfect."
+    notPerfectMessage: .asciiz "The number is not perfect."
 
 .text
     main:
         # Prompt user
         li $v0, 4
-        la $a0, message
+        la $a0, inputMessage
         syscall
 
         # Read integer from user
@@ -56,18 +58,35 @@
 
         sw $zero, 0($t2) # Ensure the array of factors is terminated by 0
 
-        # Print factors
+        # Sum factors
         move $t0, $s1
-        li $v0, 1
+        move $t1, $zero
 
     loop2:
         lw $a0, 0($t0)
         beq $a0, $zero, terminal
-        syscall
+        add $t1, $t1, $a0
         addi $t0, $t0, 4
         b loop2
     
     terminal:
+        # Compare sum of factors to original number
+        bne $t1, $s0, notPerfect
+
+        # If we have reached this point, the number is perfect
+        li $v0, 4
+        la $a0, perfectMessage
+        syscall
+
+        b exit
+
+    notPerfect:
+        # If we have reached this point, the number is not perfect
+        li $v0, 4
+        la $a0, notPerfectMessage
+        syscall
+
+    exit:
         # Exit
         li $v0, 10
         syscall
