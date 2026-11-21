@@ -35,22 +35,39 @@
         # Save address of allocated memory
         move $s1, $v0
 
-        # Determine factors — for each number from 2 to $s0 / 2, if $s0 is evenly divisible by that number, store that number in
+        # Determine factors — for each number from 1 to $s0 / 2, if $s0 is evenly divisible by that number, store that number in
         # allocated memory
-        li $t0, 2 # $t0 = loop iterator
+        li $t0, 1 # $t0 = loop iterator
         li $t1, 2
         div $s0, $t1
         mflo $t1 # $t1 = loop ending value ($s0 / 2)
+        move $t2, $s1 # $t2 = memory address to store next factor
 
     loop:
-        # Print $t0
-        li $v0, 1
-        move $a0, $t0
-        syscall
+        rem $t3, $s0, $t0
+        bne $t3, $zero, notAFactor
 
+        sw $t0, 0($t2)
+        addi $t2, $t2, 4
+
+    notAFactor:
         addi $t0, $t0, 1
         ble $t0, $t1, loop
 
+        sw $zero, 0($t2) # Ensure the array of factors is terminated by 0
+
+        # Print factors
+        move $t0, $s1
+        li $v0, 1
+
+    loop2:
+        lw $a0, 0($t0)
+        beq $a0, $zero, terminal
+        syscall
+        addi $t0, $t0, 4
+        b loop2
+    
+    terminal:
         # Exit
         li $v0, 10
         syscall
