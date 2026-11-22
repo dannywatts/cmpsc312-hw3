@@ -13,6 +13,7 @@
 
 .data
     inputMessage: .asciiz "Enter a positive number or 0 to exit: "
+    invalidInputMessage: .asciiz "That number is not a positive integer.\n\n"
     properFactors1: .asciiz "Proper factors of "
     properFactors2: .asciiz ": "
     properFactors3: .asciiz ", "
@@ -35,6 +36,17 @@
         # Exit if the user entered 0
         beq $v0, $zero, exit
 
+        # Ensure the number is positive
+        bgtz $v0, validInput
+
+        # If it is not, let the user know and reenter.
+        li $v0, 4
+        la $a0, invalidInputMessage
+        syscall
+
+        b main
+
+    validInput:
         # Save integer
         move $s0, $v0
 
