@@ -4,20 +4,21 @@
 # Assignment:       MIPS Programming Project
 # Due date:         11/21/2026
 # File:             perfect_number_tester.asm
-# Purpose:
+# Purpose:          Prompts the user for a positive integer, determines whether
+#                   the number is perfect, and outputs the result to the user
 # Simulator:        MARS 4.5
 # OS:               Windows 11 Pro
-# References:
-# AI tool(s):
+# References:       MIPS reference sheet
+# AI tool(s):       None
 
 .data
     inputMessage: .asciiz "Enter a positive number: "
-    perfectMessage: .asciiz "The number is perfect."
-    notPerfectMessage: .asciiz "The number is not perfect."
+    perfectMessage: .asciiz "That number is perfect."
+    notPerfectMessage: .asciiz "That number is not perfect."
 
 .text
     main:
-        # Prompt user
+        # Print prompt
         li $v0, 4
         la $a0, inputMessage
         syscall
@@ -29,51 +30,75 @@
         # Save integer
         move $s0, $v0
 
-        # Allocate memory to store factors
-        move $a0, $s0
+        # Allocate memory to store proper factors (the factors of a number
+        # excluding the number itself). Therefore, the largest possible proper
+        # factor would have to satisfy 2f = n, or f = n / 2. Therefore, we will
+        # allocate n / 2 words of memory, or (n / 2) words * 4 bytes/word = n *
+        # 2 bytes.
         li $v0, 9
+        move $a0, $s0
+        mul $a0, $a0, 2
         syscall
 
         # Save address of allocated memory
         move $s1, $v0
 
-        # Determine factors — for each number from 1 to $s0 / 2, if $s0 is evenly divisible by that number, store that number in
-        # allocated memory
-        li $t0, 1 # $t0 = loop iterator
+        # Determine proper factors. For each number from 1 to n / 2, if $s0 is
+        # evenly divisible by that number, store that number in allocated
+        # memory.
+        li $t0, 1 # $t0 = iterator
+
         li $t1, 2
         div $s0, $t1
-        mflo $t1 # $t1 = loop ending value ($s0 / 2)
+        mflo $t1 # $t1 = sentinel value ($s0 / 2)
+
         move $t2, $s1 # $t2 = memory address to store next factor
 
-    loop:
+    factorLoop:
+        # Is n evenly divisible by the iterator?
         rem $t3, $s0, $t0
         bne $t3, $zero, notAFactor
 
+        # If it is, store the iterator in memory and increment the next memory
+        # address by 1 word, or 4 bytes.
         sw $t0, 0($t2)
         addi $t2, $t2, 4
 
     notAFactor:
-        addi $t0, $t0, 1
-        ble $t0, $t1, loop
+        # Nothing needs to be done if the iterator is not a factor.
 
-        sw $zero, 0($t2) # Ensure the array of factors is terminated by 0
+        # Increment the iterator, check if it is less than or equal to the
+        # sentinel value, and continue the loop if it is.
+        addi $t0, $t0, 1
+        ble $t0, $t1, factorLoop
+
+        # Ensure the array of factors is terminated by 0
+        sw $zero, 0($t2)
 
         # Sum factors
-        move $t0, $s1
-        move $t1, $zero
+        move $t0, $s1 # $t0 = address of factor
+        move $t1, $zero # $t1 = sum
 
-    loop2:
+    sumLoop:
+        # Load factor from memory address
         lw $a0, 0($t0)
-        beq $a0, $zero, terminal
+
+        # Exit the loop if the factor is the sentinel value, 0
+        beq $a0, $zero, sumDone
+
+        # Otherwise, add the factor to the sum
         add $t1, $t1, $a0
+
+        # Increment the memory address and continue the loop
         addi $t0, $t0, 4
-        b loop2
+        b sumLoop
     
-    terminal:
-        # Compare sum of factors to original number
+    sumDone:
+        # If the sum is not equal to the original number, the number is not
+        # perfect.
         bne $t1, $s0, notPerfect
 
-        # If we have reached this point, the number is perfect
+        # If it is, it is perfect. Let the user know.
         li $v0, 4
         la $a0, perfectMessage
         syscall
@@ -81,12 +106,11 @@
         b exit
 
     notPerfect:
-        # If we have reached this point, the number is not perfect
+        # Let the user know the number is not perfect.
         li $v0, 4
         la $a0, notPerfectMessage
         syscall
 
     exit:
-        # Exit
         li $v0, 10
         syscall
