@@ -17,6 +17,7 @@
     properFactors2: .asciiz ": "
     properFactors3: .asciiz ", "
     newline: .asciiz "\n"
+    sumMessage: .asciiz "Sum of proper factors: "
     perfectMessage: .asciiz "That number is perfect."
     notPerfectMessage: .asciiz "That number is not perfect."
 
@@ -137,6 +138,19 @@
         b sumLoop
     
     sumDone:
+        # Print sum
+        li $v0, 4
+        la $a0, sumMessage
+        syscall
+
+        li $v0, 1
+        move $a0, $t1
+        syscall
+
+        li $v0, 4
+        la $a0, newline
+        syscall
+
         # If the sum is not equal to the original number, the number is not
         # perfect.
         bne $t1, $s0, notPerfect
