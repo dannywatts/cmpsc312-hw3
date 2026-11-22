@@ -12,14 +12,14 @@
 # AI tool(s):       None
 
 .data
-    inputMessage: .asciiz "Enter a positive number: "
+    inputMessage: .asciiz "Enter a positive number or 0 to exit: "
     properFactors1: .asciiz "Proper factors of "
     properFactors2: .asciiz ": "
     properFactors3: .asciiz ", "
     newline: .asciiz "\n"
     sumMessage: .asciiz "Sum of proper factors: "
-    perfectMessage: .asciiz "That number is perfect."
-    notPerfectMessage: .asciiz "That number is not perfect."
+    perfectMessage: .asciiz "That number is perfect.\n\n"
+    notPerfectMessage: .asciiz "That number is not perfect.\n\n"
 
 .text
     main:
@@ -31,6 +31,9 @@
         # Read integer from user
         li $v0, 5
         syscall
+
+        # Exit if the user entered 0
+        beq $v0, $zero, exit
 
         # Save integer
         move $s0, $v0
@@ -160,13 +163,15 @@
         la $a0, perfectMessage
         syscall
 
-        b exit
+        b main
 
     notPerfect:
         # Let the user know the number is not perfect.
         li $v0, 4
         la $a0, notPerfectMessage
         syscall
+
+        b main
 
     exit:
         li $v0, 10
