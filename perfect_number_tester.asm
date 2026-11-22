@@ -13,6 +13,10 @@
 
 .data
     inputMessage: .asciiz "Enter a positive number: "
+    properFactors1: .asciiz "Proper factors of "
+    properFactors2: .asciiz ": "
+    properFactors3: .asciiz ", "
+    newline: .asciiz "\n"
     perfectMessage: .asciiz "That number is perfect."
     notPerfectMessage: .asciiz "That number is not perfect."
 
@@ -43,9 +47,8 @@
         # Save address of allocated memory
         move $s1, $v0
 
-        # Determine proper factors. For each number from 1 to n / 2, if $s0 is
-        # evenly divisible by that number, store that number in allocated
-        # memory.
+        # Determine proper factors. Begin by initializing registers for loop and
+        # printing the prompt for the proper factors.
         li $t0, 1 # $t0 = iterator
 
         li $t1, 2
@@ -54,14 +57,49 @@
 
         move $t2, $s1 # $t2 = memory address to store next factor
 
+        li $v0, 4
+        la $a0, properFactors1
+        syscall
+
+        li $v0, 1
+        move $a0, $s0
+        syscall
+
+        li $v0, 4
+        la $a0, properFactors2
+        syscall
+
+        # Because 1 is a proper factor of every positive integer and printing a
+        # comma before the first number would be incorrect, we will process 1
+        # separately.
+        sw $t0, 0($t2)
+
+        li $v0, 1
+        move $a0, $t0
+        syscall
+
+        addi $t2, $t2, 4
+        addi $t0, $t0, 1
+
+    # For each number from 2 to n / 2, if $s0 is evenly divisible by that
+    # number, store that number in allocated memory and print it.
     factorLoop:
         # Is n evenly divisible by the iterator?
         rem $t3, $s0, $t0
         bne $t3, $zero, notAFactor
 
-        # If it is, store the iterator in memory and increment the next memory
-        # address by 1 word, or 4 bytes.
+        # If it is, store the iterator in memory, print a comma and it, and
+        # increment the next memory address by 1 word, or 4 bytes.
         sw $t0, 0($t2)
+
+        li $v0, 4
+        la $a0, properFactors3
+        syscall
+
+        li $v0, 1
+        move $a0, $t0
+        syscall
+
         addi $t2, $t2, 4
 
     notAFactor:
@@ -74,6 +112,11 @@
 
         # Ensure the array of factors is terminated by 0
         sw $zero, 0($t2)
+
+        # End the line of printed factors with a newline
+        li $v0, 4
+        la $a0, newline
+        syscall
 
         # Sum factors
         move $t0, $s1 # $t0 = address of factor
